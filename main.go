@@ -33,7 +33,7 @@ func main() {
 
 	conn, err := sql.Open("postgres", dbUrl)
 	if err != nil {
-		log.Fatal("Can't connect to database:", err)
+		log.Fatal("can't connect to database:", err)
 	}
 
 	apiCfg := apiConfig{
@@ -54,6 +54,7 @@ func main() {
 	v1Router.Get("/healthz", handlerReadiness)
 	v1Router.Get("/err", handlerErr)
 	v1Router.Post("/users", apiCfg.handlerCreateUser)
+	v1Router.Get("/users", apiCfg.handlerGetUser)
 
 	router.Mount("/v1", v1Router)
 
@@ -61,9 +62,9 @@ func main() {
 		Addr: ":"+port,
 		Handler: router,
 	}
-	log.Println("Running server on port: ", srv.Addr)
+	log.Println("running server on port: ", srv.Addr)
 	err = srv.ListenAndServe()
 	if err != nil {
-		log.Fatal("Server Error: ", err.Error())
+		log.Fatal("server error: ", err.Error())
 	}
 }
