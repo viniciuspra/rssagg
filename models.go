@@ -70,3 +70,11 @@ func dbFeedFollowToFeedFollow(dbFeedFollow db.FeedFollow) FeedFollow {
 		UpdatedAt: dbFeedFollow.UpdatedAt,
 	}
 }
+
+func dbFeedFollowsToFeedFollows(dbFeedFollows []db.FeedFollow) []FeedFollow {
+	feedFollows := make([]FeedFollow, len(dbFeedFollows))
+	for i, dbFeedFollow := range dbFeedFollows {
+		feedFollows[i] = dbFeedFollowToFeedFollow(dbFeedFollow)
+	}
+	return feedFollows
+}
