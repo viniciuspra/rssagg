@@ -44,3 +44,11 @@ func dbFeedToFeed(dbFeed db.Feed) Feed {
 		UpdatedAt: dbFeed.UpdatedAt,
 	}
 }
+
+func dbFeedsToFeeds(dbFeeds []db.Feed) []Feed {
+	feeds := make([]Feed, len(dbFeeds))
+	for i, dbFeed := range dbFeeds {
+		feeds[i] = dbFeedToFeed(dbFeed)
+	}
+	return feeds
+}
