@@ -15,7 +15,13 @@ health:
 sqlc:
 	docker compose run --rm sqlc generate
 
-g-up:
+p-up:
+	docker compose up -d postgres
+
+p-stop:
+	docker compose stop postgres
+
+g-up: p-up
 	goose -dir $(MIGRATIONS_DIR) postgres $(DB_URL) up
 
 g-down:
