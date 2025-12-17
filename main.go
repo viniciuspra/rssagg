@@ -47,7 +47,7 @@ func main() {
 		log.Fatal("missing database configuration: DB_USER, DB_PASSWORD, DB_HOST, DB_PORT, or DB_NAME")
 	}
 
-	dbUrl := "postgres://" + dbUser + ":" + dbPassword + "@" + dbHost + ":" + dbPort + "/" + dbName
+	dbUrl := "postgres://" + dbUser + ":" + dbPassword + "@" + dbHost + ":" + dbPort + "/" + dbName + "?sslmode=disable"
 
 	conn, err := sql.Open("postgres", dbUrl)
 	if err != nil {
