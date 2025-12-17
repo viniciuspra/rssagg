@@ -1,10 +1,13 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/go-chi/chi"
@@ -20,6 +23,13 @@ type apiConfig struct {
 }
 
 func main() {
+	ctx, stop := signal.NotifyContext(
+		context.Background(),
+		os.Interrupt,
+		syscall.SIGTERM,
+	)
+	defer stop()
+
 	godotenv.Load()
 
 	port := os.Getenv("PORT")
@@ -42,7 +52,7 @@ func main() {
 		DB:  db,
 	}
 
-	go startScraping(db, 10, time.Minute)
+	go startScraping(ctx, db, 10, time.Minute)
 
 	router := chi.NewRouter()
 	router.Use(cors.Handler(cors.Options{
@@ -74,8 +84,17 @@ func main() {
 		Handler: router,
 	}
 	log.Println("running server on port: ", srv.Addr)
-	err = srv.ListenAndServe()
-	if err != nil {
-		log.Fatal("server error: ", err.Error())
+
+	go runHTTPServer(srv)
+
+	<-ctx.Done()
+	shutdownCtx, cancel := context.WithTimeout(
+		context.Background(),
+		time.Second * 10,
+	)
+	defer cancel()
+
+	if err := srv.Shutdown(shutdownCtx); err != nil {
+		log.Println("server shutdown failed:", err)
 	}
 }
