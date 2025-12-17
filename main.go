@@ -37,10 +37,17 @@ func main() {
 		log.Fatal("PORT env is missing")
 	}
 
-	dbUrl := os.Getenv("DATABASE_URL")
-	if dbUrl == "" {
-		log.Fatal("DATABASE_URL env is missing")
+	dbUser := os.Getenv("DB_USER")
+	dbPassword := os.Getenv("DB_PASSWORD")
+	dbHost := os.Getenv("DB_HOST")
+	dbPort := os.Getenv("DB_PORT")
+	dbName := os.Getenv("DB_NAME")
+
+	if dbUser == "" || dbPassword == "" || dbHost == "" || dbPort == "" || dbName == "" {
+		log.Fatal("missing database configuration: DB_USER, DB_PASSWORD, DB_HOST, DB_PORT, or DB_NAME")
 	}
+
+	dbUrl := "postgres://" + dbUser + ":" + dbPassword + "@" + dbHost + ":" + dbPort + "/" + dbName
 
 	conn, err := sql.Open("postgres", dbUrl)
 	if err != nil {
