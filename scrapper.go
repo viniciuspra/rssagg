@@ -9,31 +9,40 @@ import (
 	"github.com/viniciuspra/rssagg/internal/db"
 )
 
-func startScraping(db *db.Queries, concurrency int, timeBtwReq time.Duration) {
+func startScraping(ctx context.Context, db *db.Queries, concurrency int, timeBtwReq time.Duration) {
 	log.Printf("starting scraping on %v goroutines every %v", concurrency, timeBtwReq)
 
 	ticker := time.NewTicker(timeBtwReq)
-	for ; ; <-ticker.C {
-		feeds, err := db.GetNextFeedsToFetch(context.Background(), int32(concurrency))
-		if err != nil {
-			log.Println("error fetching next feeds to fetch:", err)
-			continue
+	defer ticker.Stop()
+	for {
+		select {
+			case <-ctx.Done():
+				log.Println(ctx.Err())
+				return
+			case <-ticker.C:
+				runScrapeCycle(ctx, db, concurrency)
 		}
-
-		wg := &sync.WaitGroup{}
-		for _, feed := range feeds {
-			wg.Add(1)
-
-			go scrapeFeed(wg, db, feed)
-		}
-		wg.Wait()
 	}
 }
 
-func scrapeFeed(wg *sync.WaitGroup, db *db.Queries, feed db.Feed) {
+func runScrapeCycle(ctx context.Context, db *db.Queries, concurrency int) {
+	wg := &sync.WaitGroup{}
+	feeds, err := db.GetNextFeedsToFetch(ctx, int32(concurrency))
+	if err != nil {
+		log.Println("error fetching next feeds to fetch:", err)
+		return
+	}
+	for _, feed := range feeds {
+		wg.Add(1)
+		go scrapeFeed(ctx, wg, db, feed)
+	}
+	wg.Wait()
+}
+
+func scrapeFeed(ctx context.Context, wg *sync.WaitGroup, db *db.Queries, feed db.Feed) {
 	defer wg.Done()
 
-	err := db.MarkFeedAsFetched(context.Background(), feed.ID)
+	err := db.MarkFeedAsFetched(ctx, feed.ID)
 	if err != nil {
 		log.Println("error marking feed as fetched:", err)
 		return
